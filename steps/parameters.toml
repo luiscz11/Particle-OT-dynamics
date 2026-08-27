@@ -1,0 +1,62 @@
+# =================================
+# Particle
+# =================================
+
+[particle]
+
+length = 10e-6                      # Total Particle length [m]
+diameter = 7e-6                     # Particle diameter [m]
+swimming_speed = 10e-6               # Only for active particles [m/s]
+
+eta = 0.953e-3                      # Dynamic viscosity [Pa s] 
+
+n_particle = 1.38                   #Particle refractive index 
+n_medium = 1.33                     #Medium refractive index
+
+# =================================
+# Initial conditions
+# =================================
+
+[initial]
+
+x0 = 0.0                            # [m]
+y0 = 0.0                            # [m]
+z0 = 0.0                            # [m]
+
+theta0_deg = 25.0                   # [deg]
+phi0_deg = 25.0                     # [deg]
+
+# =================================
+# Flow conditions
+# =================================
+
+[flow]
+
+gamma = 0.000001                       # Shear rate [1/s]
+plane = "xy"                        
+
+# =================================
+# Optical conditions
+# =================================
+
+[optics]
+
+wavelength = 976e-9                 # wavelength [m]
+w0 = 50.0e-6                        # Beam radius at focus [m]
+laser_power = 140.0e-3              # [W]
+
+beam_axis = [0.0, 0.0, 1.0]
+polarization = [0.0,1.0,0.0]
+
+# =================================
+# Simulation conditions
+# =================================
+
+[simulation]
+
+t0 = 0.0                 # [s]
+tf = 300.0               # [s]
+n_points = 4000
+rtol=1e-9
+atol=1e-12
+
