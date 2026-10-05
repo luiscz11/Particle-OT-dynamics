@@ -35,11 +35,59 @@ def grad_u_simple_shear(gamma: float, plane: str) -> np.ndarray:
         G[0,1] = gamma
     elif plane == "xz":
         G[0,2] = gamma
+    elif plane == "yx":
+        G[1, 0] = gamma
+
+    elif plane == "yz":
+        G[1, 2] = gamma
+
+    elif plane == "zx":
+        G[2, 0] = gamma
+
+    elif plane == "zy":
+        G[2, 1] = gamma
+
     else:
-        raise ValueError("plane must be 'xy' or 'xz'")
+        raise ValueError(
+            "plane must be 'xy', 'xz', 'yx', 'yz', 'zx', or 'zy'"
+        )
+
     return G
 
+def grad_u_extensional(epsilon_dot: float, plane: str) -> np.ndarray:
 
+    G = np.zeros((3, 3), dtype=float)
+
+    if plane == "xy":
+        G[0, 0] = epsilon_dot
+        G[1, 1] = -epsilon_dot
+
+    elif plane == "yx":
+        G[1, 1] = epsilon_dot
+        G[0, 0] = -epsilon_dot
+
+    elif plane == "xz":
+        G[0, 0] = epsilon_dot
+        G[2, 2] = -epsilon_dot
+
+    elif plane == "zx":
+        G[2, 2] = epsilon_dot
+        G[0, 0] = -epsilon_dot
+
+    elif plane == "yz":
+        G[1, 1] = epsilon_dot
+        G[2, 2] = -epsilon_dot
+
+    elif plane == "zy":
+        G[2, 2] = epsilon_dot
+        G[1, 1] = -epsilon_dot
+
+    else:
+        raise ValueError(
+            "plane must be 'xy', 'yx', 'xz', 'zx', 'yz', or 'zy'"
+        )
+
+    return G
 
 
 def decompose_grad_u(G):
@@ -62,6 +110,11 @@ def jeffery_rhs_vector(t: float, p: np.ndarray, E: np.ndarray, W: np.ndarray, la
     dEp = p @ Ep 
     dp = Wp + lam * (Ep - dEp * p)
     return dp
+
+
+
+
+
 
 #Unit vector -> (theta, phi). Uses atan2 for robust quadrant.
 def vec_to_sph(p: np.ndarray) -> tuple[float, float]:
@@ -184,6 +237,251 @@ def uniaxial_alignment_drift(
         axis - c * p
     )
 
+def gradient_torque_strength(
+    R: np.ndarray,
+    alpha_v: float,
+    volume: float,
+    body_points: np.ndarray,
+    field_squared_fn,
+    preferred_axis: np.ndarray = None,
+    perpendicular_axis: np.ndarray = None
+) -> float:
+    """
+    Calcula la intensidad kappa_grad del potencial
+    orientacional de gradiente.
+
+    Se compara la energía de la partícula orientada
+    con el eje preferido y perpendicular a éste.
+
+    Returns
+    -------
+    float
+        kappa_grad [J].
+    """
+
+    if preferred_axis is None:
+        preferred_axis = np.array(
+            [0.0, 0.0, 1.0],
+            dtype=float
+        )
+
+    if perpendicular_axis is None:
+        perpendicular_axis = np.array(
+            [1.0, 0.0, 0.0],
+            dtype=float
+        )
+
+    U_parallel = gradient_potential(
+        R=R,
+        axis=preferred_axis,
+        alpha_v=alpha_v,
+        volume=volume,
+        body_points=body_points,
+        field_squared_fn=field_squared_fn
+    )
+
+    U_perpendicular = gradient_potential(
+        R=R,
+        axis=perpendicular_axis,
+        alpha_v=alpha_v,
+        volume=volume,
+        body_points=body_points,
+        field_squared_fn=field_squared_fn
+    )
+
+    return float(
+        abs(
+            U_perpendicular
+            - U_parallel
+        )
+    )
+
+def prolate_spheroid_points(
+    Length: float,
+    diameter: float,
+    n_grid: int = 13
+) -> np.ndarray:
+
+    a = Length / 2.0
+    b = diameter / 2.0
+
+    q = np.linspace(
+        -1.0,
+        1.0,
+        n_grid
+    )
+
+    points = []
+
+    for qx in q:
+        for qy in q:
+            for qz in q:
+                #Solo guarda los puntos dentro de una esfera unitaria
+                if (
+                    qx**2
+                    + qy**2
+                    + qz**2
+                    <= 1.0
+                ):
+                    #Estiramos el eje z usando a y comprimimos y and x con b
+                    points.append([
+                        b * qx,
+                        b * qy,
+                        a * qz
+                    ])
+
+    return np.asarray(
+        points,
+        dtype=float
+    )
+
+def gaussian_com_force(
+    R: np.ndarray,
+    U0: float,
+    w0: float,
+    zR: float
+) -> np.ndarray:
+    """
+    Fuerza óptica asociada al potencial gaussiano del COM.
+
+    F_opt = -grad_R U
+
+    Parameters
+    ----------
+    R : np.ndarray
+        Posición [x, y, z].
+    U0 : float
+        Profundidad positiva del potencial.
+    w0 : float
+        Radio del haz en el foco.
+    zR : float
+        Rango de Rayleigh.
+
+    Returns
+    -------
+    np.ndarray
+        Fuerza óptica [Fx, Fy, Fz].
+    """
+    R = np.asarray(R, dtype=float)
+
+    if R.shape != (3,):
+        raise ValueError("R must be a three-dimensional vector.")
+    if U0 < 0.0:
+        raise ValueError("U0 must be non-negative.")
+    if w0 <= 0.0:
+        raise ValueError("w0 must be positive.")
+    if zR <= 0.0:
+        raise ValueError("zR must be positive.")
+
+    x, y, z = R
+
+    wz = waist_beam(w0, z, zR)
+    w2 = wz**2
+    r2 = x**2 + y**2
+
+    exponential = np.exp(-2.0 * r2 / w2)
+    common = U0 * w0**2 * exponential
+
+    # Fuerzas transversales
+    Fx = -4.0 * common * x / w2**2
+    Fy = -4.0 * common * y / w2**2
+
+    # Derivada de w(z)^2 respecto de z
+    dw2_dz = 2.0 * w0**2 * z / zR**2
+ 
+    U = -common / w2
+
+    Fz = U * dw2_dz * (
+        1.0 / w2
+        - 2.0 * r2 / w2**2
+    )
+
+    return np.array([Fx, Fy, Fz], dtype=float)
+
+def harmonic_com_potential(
+    R: np.ndarray,
+    kx: float,
+    ky: float,
+    kz: float
+) -> float:
+    """
+    Potencial armónico tridimensional para el centro de masa.
+    """
+    R = np.asarray(R, dtype=float)
+
+    if R.shape != (3,):
+        raise ValueError("R must be a three-dimensional vector.")
+
+    x, y, z = R
+
+    return 0.5 * (
+        kx * x**2
+        + ky * y**2
+        + kz * z**2
+    )
+
+def harmonic_com_force(
+    R: np.ndarray,
+    kx: float,
+    ky: float,
+    kz: float
+) -> np.ndarray:
+    """
+    Fuerza restauradora del potencial armónico.
+
+    F = (-kx*x, -ky*y, -kz*z)
+    """
+    R = np.asarray(R, dtype=float)
+
+    if R.shape != (3,):
+        raise ValueError("R must be a three-dimensional vector.")
+
+    x, y, z = R
+
+    return np.array([
+        -kx * x,
+        -ky * y,
+        -kz * z
+    ], dtype=float)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -283,20 +581,7 @@ def integrate_theta_phi(
     return sol.t, Y
 
 #Extensional flow
-def grad_u_extensional(epsilon_dot: float, plane: str) -> np.ndarray:
-    G = np.zeros((3,3), dtype=float)
-    if plane == "xy":
-        G[0,0]= epsilon_dot
-        G[1,1]=-epsilon_dot
-    elif plane == "xz":
-        G[0,0]= epsilon_dot
-        G[2,2]=-epsilon_dot
-    elif plane == "yz":
-        G[1,1] = epsilon_dot
-        G[2,2] = -epsilon_dot
-    else:
-        raise ValueError("plane must be 'xy', 'xz' or 'yz'")
-    return G
+
 
 #Rigid rotation, all contribution is in the antisimetric part
 def grad_u_rotation(omega: float, plane: str) -> np.ndarray:
@@ -531,114 +816,9 @@ def gaussian_com_potential(
 
     return -U0 * intensity_factor
 
-def gaussian_com_force(
-    R: np.ndarray,
-    U0: float,
-    w0: float,
-    zR: float
-) -> np.ndarray:
-    """
-    Fuerza óptica asociada al potencial gaussiano del COM.
 
-    F_opt = -grad_R U
 
-    Parameters
-    ----------
-    R : np.ndarray
-        Posición [x, y, z].
-    U0 : float
-        Profundidad positiva del potencial.
-    w0 : float
-        Radio del haz en el foco.
-    zR : float
-        Rango de Rayleigh.
 
-    Returns
-    -------
-    np.ndarray
-        Fuerza óptica [Fx, Fy, Fz].
-    """
-    R = np.asarray(R, dtype=float)
-
-    if R.shape != (3,):
-        raise ValueError("R must be a three-dimensional vector.")
-    if U0 < 0.0:
-        raise ValueError("U0 must be non-negative.")
-    if w0 <= 0.0:
-        raise ValueError("w0 must be positive.")
-    if zR <= 0.0:
-        raise ValueError("zR must be positive.")
-
-    x, y, z = R
-
-    wz = waist_beam(w0, z, zR)
-    w2 = wz**2
-    r2 = x**2 + y**2
-
-    exponential = np.exp(-2.0 * r2 / w2)
-    common = U0 * w0**2 * exponential
-
-    # Fuerzas transversales
-    Fx = -4.0 * common * x / w2**2
-    Fy = -4.0 * common * y / w2**2
-
-    # Derivada de w(z)^2 respecto de z
-    dw2_dz = 2.0 * w0**2 * z / zR**2
-
-    U = -common / w2
-
-    Fz = U * dw2_dz * (
-        1.0 / w2
-        - 2.0 * r2 / w2**2
-    )
-
-    return np.array([Fx, Fy, Fz], dtype=float)
-
-def harmonic_com_potential(
-    R: np.ndarray,
-    kx: float,
-    ky: float,
-    kz: float
-) -> float:
-    """
-    Potencial armónico tridimensional para el centro de masa.
-    """
-    R = np.asarray(R, dtype=float)
-
-    if R.shape != (3,):
-        raise ValueError("R must be a three-dimensional vector.")
-
-    x, y, z = R
-
-    return 0.5 * (
-        kx * x**2
-        + ky * y**2
-        + kz * z**2
-    )
-
-def harmonic_com_force(
-    R: np.ndarray,
-    kx: float,
-    ky: float,
-    kz: float
-) -> np.ndarray:
-    """
-    Fuerza restauradora del potencial armónico.
-
-    F = (-kx*x, -ky*y, -kz*z)
-    """
-    R = np.asarray(R, dtype=float)
-
-    if R.shape != (3,):
-        raise ValueError("R must be a three-dimensional vector.")
-
-    x, y, z = R
-
-    return np.array([
-        -kx * x,
-        -ky * y,
-        -kz * z
-    ], dtype=float)
 
 
 
@@ -785,43 +965,7 @@ def prolate_polarizabilities(
     )
 
 # Points inside a prolate spheroid whose long axis is initially z
-def prolate_spheroid_points(
-    Length: float,
-    diameter: float,
-    n_grid: int = 13
-) -> np.ndarray:
 
-    a = Length / 2.0
-    b = diameter / 2.0
-
-    q = np.linspace(
-        -1.0,
-        1.0,
-        n_grid
-    )
-
-    points = []
-
-    for qx in q:
-        for qy in q:
-            for qz in q:
-
-                if (
-                    qx**2
-                    + qy**2
-                    + qz**2
-                    <= 1.0
-                ):
-                    points.append([
-                        b * qx,
-                        b * qy,
-                        a * qz
-                    ])
-
-    return np.asarray(
-        points,
-        dtype=float
-    )
 
 def rotate_points_from_z(
     points: np.ndarray,
@@ -988,64 +1132,7 @@ def gradient_potential(
         * integral_E2
     )
 
-def gradient_torque_strength(
-    R: np.ndarray,
-    alpha_v: float,
-    volume: float,
-    body_points: np.ndarray,
-    field_squared_fn,
-    preferred_axis: np.ndarray = None,
-    perpendicular_axis: np.ndarray = None
-) -> float:
-    """
-    Calcula la intensidad kappa_grad del potencial
-    orientacional de gradiente.
 
-    Se compara la energía de la partícula orientada
-    con el eje preferido y perpendicular a éste.
-
-    Returns
-    -------
-    float
-        kappa_grad [J].
-    """
-
-    if preferred_axis is None:
-        preferred_axis = np.array(
-            [0.0, 0.0, 1.0],
-            dtype=float
-        )
-
-    if perpendicular_axis is None:
-        perpendicular_axis = np.array(
-            [1.0, 0.0, 0.0],
-            dtype=float
-        )
-
-    U_parallel = gradient_potential(
-        R=R,
-        axis=preferred_axis,
-        alpha_v=alpha_v,
-        volume=volume,
-        body_points=body_points,
-        field_squared_fn=field_squared_fn
-    )
-
-    U_perpendicular = gradient_potential(
-        R=R,
-        axis=perpendicular_axis,
-        alpha_v=alpha_v,
-        volume=volume,
-        body_points=body_points,
-        field_squared_fn=field_squared_fn
-    )
-
-    return float(
-        abs(
-            U_perpendicular
-            - U_parallel
-        )
-    )
 
 def polarization_torque_strength(
     alpha_parallel: float,

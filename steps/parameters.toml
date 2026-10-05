@@ -4,8 +4,8 @@
 
 [particle]
 
-length = 500e-9                      # Total Particle length [m]
-diameter = 70e-9                     # Particle diameter [m]
+length = 50e-6                      # Total Particle length [m]
+diameter = 7e-6                     # Particle diameter [m]
 swimming_speed = 10e-6               # Only for active particles [m/s]
 
 eta = 0.953e-3                      # Dynamic viscosity [Pa s] 
@@ -42,7 +42,7 @@ plane = "xz"
 [optics]
 
 wavelength = 1310e-9                 # wavelength [m]
-w0 = 1.9e-6                        # Beam radius at focus [m]
+w0 = 55e-6                        # Beam radius at focus [m]
 laser_power = 25.0e-3              # [W]
 
 beam_axis = [0.0, 0.0, 1.0]
@@ -55,7 +55,7 @@ polarization = [0.0,1.0,0.0]
 [simulation]
 
 t0 = 0.0                 # [s]
-tf = 300.0               # [s]
+tf = 500.0               # [s]
 n_points = 4000
 rtol=1e-9
 atol=1e-12
