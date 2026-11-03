@@ -28,3 +28,10 @@ and its orientation vector
 $$\mathbf{p}=(p_x, p_y, p_z),\qquad ||\mathbf{p}|| = 1 $$
 
 Its orientational dynamics are modeled from Jeffery's equation and progressively extended to include optical aligment torques, while its translational dynamics account for background flow, active swimming and optical trapping forces. 
+
+## Relevant parameters 
+
+### Microalgae parameters
+
+$$ \mathbf{L} \mathbf{ }(\text{Length}), \qquad \mathbf{D} \mathbf{ }(\text{Diameter})$$
+
