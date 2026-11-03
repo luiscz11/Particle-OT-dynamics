@@ -5,7 +5,7 @@
     <strong>Raúl Ignacio Hernández Aranda<sup>1</sup></strong><br><br>
 
     <small>
-        School of Engineering and Sciences, Tecnológico de Monterrey, Mexico<br>
+        <sup>1</sup> School of Engineering and Sciences, Tecnológico de Monterrey, Mexico
     </small>
 </p>
 
