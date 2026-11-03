@@ -35,3 +35,33 @@ Its orientational dynamics are modeled from Jeffery's equation and progressively
 
 $$ \mathbf{L} \mathbf{ }(\text{Length}), \qquad \mathbf{D} \mathbf{ }(\text{Diameter})$$
 
+This parameters controls the geometry and Jeffery through the aspect ratio.
+
+$$ \mathbf{v}_s \mathbf{ }(\text{velocity of the active particle})$$
+
+$$ \mathbf{\eta}_s \mathbf{ }(\text{viscosity})$$
+
+### Flux parameter
+
+$$ \dot\gamma \mathbf{ }(\text{Shear rate})$$
+
+More shear rate makes the Jeffery dynamics happen faster.
+
+### Laser parameters 
+$$ \mathbf{P} \mathbf{ }(\text{Laser power})$$
+
+$$ \mathbf{w}_0 \mathbf{ }(\text{Beam waist})$$
+
+$\mathbf{P}$ controls how the intensity increases or decreseas, hence the intensity of the optical torque and alligment. 
+
+$\mathbf{w}_0$ controls the intensity and the gradients experimented, specially the perpendicular stiffness $k_\perp$ ($k_x$, $k_y$)
+
+### Optic parameters
+$$ \mathbf{n}_p \mathbf{ }(\text{particle refractive index})$$
+
+$$ \mathbf{n}_m \mathbf{ }(\text{Medium refractive index})$$
+
+### Initial parameters 
+
+
+
