@@ -39,7 +39,7 @@ This parameters controls the geometry and Jeffery through the aspect ratio.
 
 $$ \mathbf{v}_s \mathbf{ }(\text{velocity of the active particle})$$
 
-$$ \mathbf{\eta}_s \mathbf{ }(\text{viscosity})$$
+$$ \mathbf{\eta} \mathbf{ }(\text{viscosity})$$
 
 ### Flux parameter
 
@@ -62,6 +62,14 @@ $$ \mathbf{n}_p \mathbf{ }(\text{particle refractive index})$$
 $$ \mathbf{n}_m \mathbf{ }(\text{Medium refractive index})$$
 
 ### Initial parameters 
+$$ \mathbf{R} \mathbf{ }(\text{Initial position})$$
 
+$$ \mathbf{\theta}_0 \mathbf{ }(\text{Azimutal angle})$$
+
+$$ \mathbf{\phi}_0 \mathbf{ }(\text{angle with respect to z})$$
+
+R is important in gaussian simulations, getting away from the origin will change the intensity experimented by the particle.
+
+$\theta_0$ and $\phi_0$ determines which orbit the jeffery orbit will follow; which is the base of the simulations. 
 
 
