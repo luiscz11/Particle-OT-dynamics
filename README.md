@@ -4,7 +4,7 @@
     <strong>Luis Ivan Cerezo Zepeda <sup>1</sup></strong>,
     <strong>Raúl Ignacio Hernández Aranda<sup>1</sup></strong><br><br>
 
-    <small>
+<small>
         <sup>1</sup> School of Engineering and Sciences, Tecnológico de Monterrey, Mexico
     </small>
 </p>
@@ -54,7 +54,7 @@ $$ \mathbf{w}_0 \mathbf{ }(\text{Beam waist})$$
 
 $\mathbf{P}$ controls how the intensity increases or decreseas, hence the intensity of the optical torque and alligment. 
 
-$\mathbf{w}_0$ controls the intensity and the gradients experimented, specially the perpendicular stiffness $k_\perp$ ($k_x$, $k_y$)
+$w_0$ controls the intensity and the gradients experimented, specially the perpendicular stiffness $k_\perp$ ($k_x$, $k_y$)
 
 ### Optic parameters
 $$ \mathbf{n}_p \mathbf{ }(\text{particle refractive index})$$
